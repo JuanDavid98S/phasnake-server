@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -17,4 +19,15 @@ func RespondwithJSON(w http.ResponseWriter, code int, payload interface{}) {
 // RespondWithError return error message
 func RespondWithError(w http.ResponseWriter, code int, msg string) {
 	RespondwithJSON(w, code, map[string]string{"message": msg})
+}
+
+// GenerateUUID retrieve a UUID string
+func GenerateUUID() (uuid string) {
+	bytes := make([]byte, 16)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return
+	}
+	uuid = fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:])
+	return uuid
 }

@@ -3,29 +3,31 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	models "../models"
 	repository "../repository"
 	utils "../utils"
-
 	"github.com/go-chi/chi"
 )
 
-// UsersHandler ...
-type UsersHandler struct {
-	repository repository.UserRepository
+// ScoresHandler ...
+type ScoresHandler struct {
+	repository repository.ScoresInterface
 }
 
-func NewUserHandler(db *sql.DB) *UsersHandler {
-	return &UsersHandler{
-		repository: repository.NewSQLUserRepository(db),
+// NewScoresHandler ..
+func NewScoresHandler(db *sql.DB) *ScoresHandler {
+	return &ScoresHandler{
+		repository: repository.NewSQLScores(db),
 	}
 }
 
-func (uh *UsersHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	payload, err := uh.repository.Fetch(r.Context(), 5)
+// GetAll ..
+func (uh *ScoresHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	payload, err := uh.repository.Fetch(r.Context(), 10)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 	}
@@ -33,7 +35,8 @@ func (uh *UsersHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	utils.RespondwithJSON(w, http.StatusOK, payload)
 }
 
-func (uh *UsersHandler) Get(w http.ResponseWriter, r *http.Request) {
+// Get ..
+func (uh *ScoresHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 
 	payload, err := uh.repository.GetByID(r.Context(), int64(id))
@@ -44,25 +47,28 @@ func (uh *UsersHandler) Get(w http.ResponseWriter, r *http.Request) {
 	utils.RespondwithJSON(w, http.StatusFound, payload)
 }
 
-func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
-	user := models.User{}
-	json.NewDecoder(r.Body).Decode(&user)
+// Create ..
+func (uh *ScoresHandler) Create(w http.ResponseWriter, r *http.Request) {
+	score := models.Scores{}
+	json.NewDecoder(r.Body).Decode(&score)
 
-	newID, err := uh.repository.Create(r.Context(), &user)
+	newID, err := uh.repository.Create(r.Context(), &score)
 	if err != nil {
+		fmt.Printf("Create %s\n", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 	}
 
-	utils.RespondwithJSON(w, http.StatusCreated, map[string]int64{"id": newID})
+	utils.RespondwithJSON(w, http.StatusCreated, map[string]string{"id": newID})
 }
 
-func (uh *UsersHandler) Update(w http.ResponseWriter, r *http.Request) {
+// Update ..
+func (uh *ScoresHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	user := models.User{}
-	json.NewDecoder(r.Body).Decode(&user)
-	user.ID = int64(id)
+	score := models.Scores{}
+	json.NewDecoder(r.Body).Decode(&score)
+	score.ID = string(id)
 
-	payload, err := uh.repository.Update(r.Context(), &user)
+	payload, err := uh.repository.Update(r.Context(), &score)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 	}
@@ -70,7 +76,8 @@ func (uh *UsersHandler) Update(w http.ResponseWriter, r *http.Request) {
 	utils.RespondwithJSON(w, http.StatusOK, payload)
 }
 
-func (uh *UsersHandler) Delete(w http.ResponseWriter, r *http.Request) {
+// Delete ..
+func (uh *ScoresHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	_, err := uh.repository.Delete(r.Context(), int64(id))
 	if err != nil {
