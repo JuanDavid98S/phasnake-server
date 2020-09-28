@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // RespondwithJSON write json response format
@@ -30,4 +31,13 @@ func GenerateUUID() (uuid string) {
 	}
 	uuid = fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:])
 	return uuid
+}
+
+// ParseInt64 retrieve a int64 value
+func ParseInt64(s string) int64 {
+	dec, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return dec
 }

@@ -9,13 +9,14 @@ import (
 	utils "../utils"
 )
 
-// NewSQLScores ...
+// NewSQLScores ..
 func NewSQLScores(db *sql.DB) ScoresInterface {
 	return &ScoresRepository{
 		Conn: db,
 	}
 }
 
+// ScoresRepository ..
 type ScoresRepository struct {
 	Conn *sql.DB
 }
@@ -31,7 +32,7 @@ func (sr *ScoresRepository) fetch(ctx context.Context, query string, args ...int
 	for rows.Next() {
 		data := new(models.Scores)
 
-		err := rows.Scan(&data.ID, &data.Nickname, &data.Score)
+		err := rows.Scan(&data.ID, &data.Nickname, &data.Score, &data.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -42,14 +43,16 @@ func (sr *ScoresRepository) fetch(ctx context.Context, query string, args ...int
 	return payload, nil
 }
 
-func (sr *ScoresRepository) Fetch(ctx context.Context, num int64) ([]*models.Scores, error) {
-	query := "SELECT id, nickname, score FROM scores ORDER BY score DESC LIMIT $1"
+// Fetch ..
+func (sr *ScoresRepository) Fetch(ctx context.Context, lastRn int64, limit int64) ([]*models.Scores, error) {
+	query := "SELECT id, nickname, score, created_at FROM scores_ordered WHERE rn > $1 ORDER BY score DESC, created_at ASC LIMIT $2"
 
-	return sr.fetch(ctx, query, num)
+	return sr.fetch(ctx, query, lastRn, limit)
 }
 
+// GetByID ..
 func (sr *ScoresRepository) GetByID(ctx context.Context, id int64) (*models.Scores, error) {
-	query := "SELECT id, nickname, score FROM scores where id = $1"
+	query := "SELECT id, nickname, score, created_at FROM scores where id = $1"
 
 	rows, err := sr.fetch(ctx, query, id)
 	if err != nil {
@@ -67,8 +70,9 @@ func (sr *ScoresRepository) GetByID(ctx context.Context, id int64) (*models.Scor
 	return payload, nil
 }
 
+// Create ..
 func (sr *ScoresRepository) Create(ctx context.Context, p *models.Scores) (string, error) {
-	query := "INSERT INTO scores (id, nickname, score) VALUES ($1, $2, $3)"
+	query := "INSERT INTO scores (id, nickname, score, created_at) VALUES ($1, $2, $3, current_timestamp)"
 	ID := utils.GenerateUUID()
 
 	stmt, err := sr.Conn.PrepareContext(ctx, query)
@@ -85,6 +89,7 @@ func (sr *ScoresRepository) Create(ctx context.Context, p *models.Scores) (strin
 	return ID, nil
 }
 
+// Update ..
 func (sr *ScoresRepository) Update(ctx context.Context, p *models.Scores) (*models.Scores, error) {
 	query := "UPDATE scores SET nickname = $2, score = $3 WHERE id = $1"
 
@@ -101,6 +106,7 @@ func (sr *ScoresRepository) Update(ctx context.Context, p *models.Scores) (*mode
 	return p, nil
 }
 
+// Delete ..
 func (sr *ScoresRepository) Delete(ctx context.Context, id int64) (bool, error) {
 	query := "DELETE FROM scores Where id = $1"
 
