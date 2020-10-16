@@ -33,14 +33,14 @@ func routerInstace(db *sql.DB) *chi.Mux {
 	}))
 
 	r.Route("/api", func(rt chi.Router) {
-		rt.Mount("/scores", routes.Users(db))
+		rt.Mount("/scores", routes.Scores(db))
 	})
 
 	return r
 }
 
 func database() *sql.DB {
-	db, err := sql.Open("postgres", "postgresql://root@192.168.1.4:26257/phasnake?sslmode=disable")
+	db, err := sql.Open("postgres", "postgresql://root@192.168.1.7:26257/phasnake?sslmode=disable")
 	if err != nil {
 		log.Fatal("error connecting to the database: ", err)
 		os.Exit(-1)

@@ -17,12 +17,12 @@ func RespondwithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-// RespondWithError return error message
+// RespondWithError return error message using RespondwithJSON method
 func RespondWithError(w http.ResponseWriter, code int, msg string) {
 	RespondwithJSON(w, code, map[string]string{"message": msg})
 }
 
-// GenerateUUID retrieve a UUID string
+// GenerateUUID retrieve a UUID string (not standart RFC-4122)
 func GenerateUUID() (uuid string) {
 	bytes := make([]byte, 16)
 	_, err := rand.Read(bytes)

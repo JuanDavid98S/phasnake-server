@@ -3,9 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	models "../models"
 	repository "../repository"
@@ -25,74 +23,92 @@ func NewScoresHandler(db *sql.DB) *ScoresHandler {
 	}
 }
 
-// GetAll ..
-func (uh *ScoresHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+// GetAll is a method to handler request to get scores
+func (sh *ScoresHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	lastRn := utils.ParseInt64(r.URL.Query().Get("lastRn"))
 	limit := utils.ParseInt64(r.URL.Query().Get("limit"))
 	if limit == 0 {
 		limit = 10
 	}
-	payload, err := uh.repository.Fetch(r.Context(), lastRn, limit)
+	payload, err := sh.repository.Fetch(r.Context(), lastRn, limit)
 	if err != nil {
-		fmt.Println("error ", err)
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 		return
 	}
 
 	utils.RespondwithJSON(w, http.StatusOK, payload)
+	return
 }
 
-// Get ..
-func (uh *ScoresHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+// Get is a method to handler request to get a single score
+func (sh *ScoresHandler) Get(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid id")
+		return
+	}
 
-	payload, err := uh.repository.GetByID(r.Context(), int64(id))
+	payload, err := sh.repository.GetByID(r.Context(), id)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 		return
 	}
 
 	utils.RespondwithJSON(w, http.StatusFound, payload)
+	return
 }
 
-// Create ..
-func (uh *ScoresHandler) Create(w http.ResponseWriter, r *http.Request) {
+// Create is a method to handler request to create a new score
+func (sh *ScoresHandler) Create(w http.ResponseWriter, r *http.Request) {
 	score := models.Scores{}
 	json.NewDecoder(r.Body).Decode(&score)
 
-	newID, err := uh.repository.Create(r.Context(), &score)
+	newID, err := sh.repository.Create(r.Context(), &score)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 		return
 	}
 
 	utils.RespondwithJSON(w, http.StatusCreated, map[string]string{"id": newID})
+	return
 }
 
-// Update ..
-func (uh *ScoresHandler) Update(w http.ResponseWriter, r *http.Request) {
+// Update is a method to handler request to update a score
+func (sh *ScoresHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid id")
+		return
+	}
+
 	score := models.Scores{}
 	json.NewDecoder(r.Body).Decode(&score)
 	score.ID = id
 
-	payload, err := uh.repository.Update(r.Context(), &score)
+	payload, err := sh.repository.Update(r.Context(), &score)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 		return
 	}
 
 	utils.RespondwithJSON(w, http.StatusOK, payload)
+	return
 }
 
-// Delete ..
-func (uh *ScoresHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	_, err := uh.repository.Delete(r.Context(), int64(id))
-	if err != nil {
+// Delete is a method to handler request to delete a score
+func (sh *ScoresHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid id")
+		return
+	}
+
+	_, errDel := sh.repository.Delete(r.Context(), id)
+	if errDel != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Server Error")
 		return
 	}
 
 	utils.RespondwithJSON(w, http.StatusOK, map[string]string{"message": "Delete Successfully"})
+	return
 }
